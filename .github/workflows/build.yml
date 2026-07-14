@@ -1,0 +1,40 @@
+name: Build APK with Buildozer
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsqlite3-dev xclip
+        pip install --upgrade pip setuptools wheel
+        pip install buildozer cython Kivy
+
+    - name: Build with Buildozer
+      run: |
+        buildozer init
+        # Burası otomatik bir buildozer.spec dosyası ayarlar
+        sed -i 's/package.name = myapp/package.name = exify/' buildozer.spec
+        sed -i 's/package.domain = org.test/package.domain = org.exify/' buildozer.spec
+        sed -i 's/source.include_exts = py,png,jpg,kv,atlas/source.include_exts = py,png,jpg,kv,atlas,html,css,js/' buildozer.spec
+        buildozer android debug
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Exify-Android-APK
+        path: bin/*.apk
